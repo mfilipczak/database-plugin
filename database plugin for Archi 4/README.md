@@ -1,7 +1,7 @@
 # Archimate Tool Database-Plugin for Archi 4
 
 ## Install the plugin
-Download the **_org.archicontribs.database_v0.11(archi4).jar_** file into Archi's plugins folder (usually **_C:\Program Files\Archi\Plugins_** on Windows).
+Download the **_org.archicontribs.database_v0.12(archi4).jar_** file into Archi's plugins folder (usually **_C:\Program Files\Archi\Plugins_** on Windows).
 
 ## Create the database
 1. Create a database that will be used to store your models
