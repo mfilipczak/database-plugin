@@ -78,18 +78,21 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
  *							Change JDBC mode to auto-commit to avoid reset each time a select fails
  * 							Correct a bug in the Neo4j model import (properties are case sensitive)
  * 							Correct a bug in the Sketch import
- * 							Column "parent" of database table "connection" removed as it was redundant with column "source"
  * 							Add colored icons on tabItem titles to summarize their status
  *							Add table "archidatabaseplugin" to distinguish databases configured with Archi 3 or Archi 4 datamodels
  *							Use of CLOB for key text fields (name, description, ...)
  *							Use of longer field for ID
  *							Include model and version to referenced Ids to prepare inter-models relationships
+ * v0.12: 23/10/2016		Add column "diagrammodelid" to table "diagrammodelreference"
+ * 							Complete rewriting of the source and target connections import procedure
+ * 							Add missing column names in Neo4J requests
+ *							Rewrite of the NetO4 relationships export request to allow self relationships
  */
 public class DBPlugin extends AbstractUIPlugin {
 	public static final String PLUGIN_ID = "org.archicontribs.database";
 	public static DBPlugin INSTANCE;
 	
-	public static final String pluginVersion = "0.10b";
+	public static final String pluginVersion = "0.12";
 	public static final String pluginName = "DatabasePlugin";
 	public static final String pluginTitle = "Database import/export plugin v" + pluginVersion;
 	public static final String Separator = ";";
@@ -308,28 +311,28 @@ public class DBPlugin extends AbstractUIPlugin {
 		ByteArrayInputStream stream = null;
 		
 		PreparedStatement pstmt = db.prepareStatement(request);
-		StringBuilder debugRequest = new StringBuilder(request);
+		String debugRequest = request;
 		for (int rank=0 ; rank < parameters.length ; rank++) {
 			if ( parameters[rank] == null ) {
-				replaceFirst(debugRequest, "?", "null");
+				debugRequest = debugRequest.replaceFirst("\\?([^\"]*(\"[^\"]*\")*[^\"]*)$","null$1");
 				pstmt.setString(rank+1, null);
 			} else {
 				if ( parameters[rank] instanceof String ) {
-					replaceFirst(debugRequest, "?", "\""+parameters[rank]+"\"");
+					debugRequest = debugRequest.replaceFirst("\\?([^\"]*(\"[^\"]*\")*[^\"]*)$","\""+((String)parameters[rank]).replace("$", "\\$")+"\"$1");
 					pstmt.setString(rank+1, (String)parameters[rank]);
 				} else if ( parameters[rank] instanceof Integer ) {
-					replaceFirst(debugRequest, "?", String.valueOf((int)parameters[rank])+"");
+					debugRequest = debugRequest.replaceFirst("\\?([^\"]*(\"[^\"]*\")*[^\"]*)$",(String.valueOf((int)parameters[rank])).replace("$", "\\$")+"$1");
 					pstmt.setInt(rank+1, (int)parameters[rank]);
 			    } else if ( parameters[rank] instanceof Boolean ) {
-			    	replaceFirst(debugRequest, "?", String.valueOf((boolean)parameters[rank]));
+			    	debugRequest = debugRequest.replaceFirst("\\?([^\"]*(\"[^\"]*\")*[^\"]*)$",(String.valueOf((boolean)parameters[rank])).replace("$", "\\$")+"$1");
 					pstmt.setBoolean(rank+1, (boolean)parameters[rank]);
 			    } else if ( parameters[rank] instanceof byte[] ) {
 			    	try  {
 			    		stream = new ByteArrayInputStream((byte[])parameters[rank]);
 			    		pstmt.setBinaryStream(rank+1, stream, ((byte[])parameters[rank]).length);
-			    		replaceFirst(debugRequest, "?", "<image as stream>");
+			    		debugRequest = debugRequest.replaceFirst("\\?([^\"]*(\"[^\"]*\")*[^\"]*)$","<image as stream>$1");
 			    	} catch (Exception err) {
-			    		replaceFirst(debugRequest, "?", "<image as String>");
+			    		debugRequest = debugRequest.replaceFirst("\\?([^\"]*(\"[^\"]*\")*[^\"]*)$","<image as String>$1");
 			    		pstmt.setString(rank+1, Base64.encode((byte[])parameters[rank]));
 			    	}
 				}
@@ -340,12 +343,15 @@ public class DBPlugin extends AbstractUIPlugin {
 			}
 		}
 		
-		debug(DebugLevel.SQLRequest, "DBPlugin.request(\""+debugRequest.toString()+"\")");
+		debug(DebugLevel.SQLRequest, "DBPlugin.request(\""+debugRequest+"\")");
 		
-		pstmt.executeUpdate();
+		int rowCount = pstmt.executeUpdate();
 		pstmt.close();
 		if ( stream != null )
 			stream.close();
+		
+		if ( (rowCount == 0) && !request.startsWith("DELETE FROM ") && !request.matches("MATCH (.*) SET .*") && !request.matches("MATCH .* DETACH DELETE .*") )
+			throw new SQLException("The update requets did not updated any row :\n\n"+debugRequest);
 	}
 	
 	/**

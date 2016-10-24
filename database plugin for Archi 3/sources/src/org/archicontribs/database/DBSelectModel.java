@@ -604,17 +604,17 @@ public class DBSelectModel extends Dialog {
 					case "3" :
 						break;
 					default :
-						if ( action == Action.Import ) {
-							throw new Exception("I'm sorry, but I can't import from this database as it is configured for Archi version "+dbVersion);
-						} else {
-							throw new Exception("I'm sorry, but I can't export to this database as it is configured for Archi version "+dbVersion);
-						}
+						throw new Exception("I'm sorry, but I can't "+(action==Action.Import?"import":"export")+" from this database as it is configured for Archi version "+dbVersion);
 					}
 				} catch (Exception err) {
 					if ( databaseTextArea != null )
 						databaseTextArea.setBackground(LIGHT_RED_COLOR);
-					if ( !"cancelByUser".equals(err.getMessage()) )
-						DBPlugin.popup(Level.Error, err.getMessage());
+					if ( !"cancelByUser".equals(err.getMessage()) ) {
+						if ( err.getMessage() == null )
+							DBPlugin.popup(Level.Error, "Cannot get the database version from \"archidatabaseplugin\" table.");
+						else
+							DBPlugin.popup(Level.Error, err.getMessage());
+					}
 					DBPlugin.debug(DebugLevel.SecondaryMethod, "-Leaving DBSelectModel.databaseSelected.widgetSelected()");
 					return;
 				}
@@ -730,7 +730,7 @@ public class DBSelectModel extends Dialog {
 				if ( dbLanguage.equals("SQL") ) {
 					request = "SELECT m.version, m.name, m.note, m.owner, m.period, m.purpose, m.countmetadatas, m.countFolders, m.countElements, m.countrelationships, m.countproperties, m.countarchimatediagrammodels, m.countdiagrammodelarchimateconnections, m.countdiagrammodelconnections, m.countdiagrammodelarchimateobjects, m.countdiagrammodelgroups, m.countdiagrammodelnotes, m.countcanvasmodels, m.countcanvasmodelblocks, m.countcanvasmodelstickys, m.countcanvasmodelconnections, m.countcanvasmodelimages, m.countimages, m.countsketchmodels, m.countsketchmodelactors, m.countsketchmodelstickys, m.countdiagrammodelbendpoints, m.countdiagrammodelreferences FROM model m WHERE m.model = ? ORDER BY m.version";
 				} else {
-					request = "MATCH (m:model {model:?}) RETURN m.version as version, m.name as name, m.note as note, m.owner as owner, m.period as period, m.purpose as purpose, m.countmetadatas as countmetadatas, m.countfolders as countfolders, m.countelements as countelements, m.countrelationships as countrelationships, m.countproperties as countproperties, m.countarchimatediagrammodels as countarchimatediagrammodels, m.countdiagrammodelarchimateconnections as countdiagrammodelarchimateconnections, m.countdiagrammodelconnections as countdiagrammodelconnections, m.countdiagrammodelarchimateobjects as countdiagrammodelarchimateobjects, m.countdiagrammodelGroups as countdiagrammodelgroups, m.countdiagrammodelnotes as countdiagrammodelnotes, m.countcanvasmodels as countcanvasmodels, m.countcanvasmodelblocks as countcanvasmodelblocks, m.countcanvasmodelstickys as countcanvasmodelstickys, m.countcanvasmodelconnections as countcanvasmodelconnections, m.countcanvasmodelimages as countcanvasmodelimages, m.countimages as countimages, m.countsketchmodels as countsketchmodels, m.countsketchmodelactors as countsketchmodelactors, m.countsketchmodelstickys as countsketchmodelstickys, m.countdiagrammodelbendpoints as countdiagrammodelbendpoints, m.countdiagrammodelreferences as countdiagrammodelreferences ORDER BY m.version";
+					request = "MATCH (m:model {model:?}) RETURN m.version as version, m.name as name, m.note as note, m.owner as owner, m.period as period, m.purpose as purpose, m.countmetadatas as countmetadatas, m.countfolders as countfolders, m.countelements as countelements, m.countrelationships as countrelationships, m.countproperties as countproperties, m.countarchimatediagrammodels as countarchimatediagrammodels, m.countdiagrammodelarchimateconnections as countdiagrammodelarchimateconnections, m.countdiagrammodelconnections as countdiagrammodelconnections, m.countdiagrammodelarchimateobjects as countdiagrammodelarchimateobjects, m.countdiagrammodelgroups as countdiagrammodelgroups, m.countdiagrammodelnotes as countdiagrammodelnotes, m.countcanvasmodels as countcanvasmodels, m.countcanvasmodelblocks as countcanvasmodelblocks, m.countcanvasmodelstickys as countcanvasmodelstickys, m.countcanvasmodelconnections as countcanvasmodelconnections, m.countcanvasmodelimages as countcanvasmodelimages, m.countimages as countimages, m.countsketchmodels as countsketchmodels, m.countsketchmodelactors as countsketchmodelactors, m.countsketchmodelstickys as countsketchmodelstickys, m.countdiagrammodelbendpoints as countdiagrammodelbendpoints, m.countdiagrammodelreferences as countdiagrammodelreferences ORDER BY m.version";
 				}
 				List<HashMap<String, String>> versions = new ArrayList<HashMap<String, String>>();
 				String name = "";
@@ -746,28 +746,28 @@ public class DBSelectModel extends Dialog {
 					version.put("period", resultVersions.getString("period"));
 					version.put("purpose", resultVersions.getString("purpose"));
 					
-					version.put("countMetadatas", resultVersions.getString("countmetadatas"));
-					version.put("countFolders", resultVersions.getString("countfolders"));
-					version.put("countElements", resultVersions.getString("countelements"));
-					version.put("countRelationships", resultVersions.getString("countrelationships"));
-					version.put("countProperties", resultVersions.getString("countproperties"));
-					version.put("countArchimateDiagramModels", resultVersions.getString("countarchimatediagrammodels"));
-					version.put("countDiagramModelArchimateConnections", resultVersions.getString("countdiagrammodelarchimateconnections"));
-					version.put("countDiagramModelConnections", resultVersions.getString("countdiagrammodelconnections"));
-					version.put("countDiagramModelArchimateObjects", resultVersions.getString("countdiagrammodelarchimateobjects"));
-					version.put("countDiagramModelGroups", resultVersions.getString("countdiagrammodelgroups"));
-					version.put("countDiagramModelNotes", resultVersions.getString("countdiagrammodelnotes"));
-					version.put("countCanvasModels", resultVersions.getString("countcanvasmodels"));
-					version.put("countCanvasModelBlocks", resultVersions.getString("countcanvasmodelblocks"));
-					version.put("countCanvasModelStickys", resultVersions.getString("countcanvasmodelstickys"));
-					version.put("countCanvasModelConnections", resultVersions.getString("countcanvasmodelconnections"));
-					version.put("countCanvasModelImages", resultVersions.getString("countcanvasmodelimages"));
-					version.put("countImages", resultVersions.getString("countimages"));
-					version.put("countSketchModels", resultVersions.getString("countsketchmodels"));
-					version.put("countSketchModelActors", resultVersions.getString("countsketchmodelactors"));
-					version.put("countSketchModelStickys", resultVersions.getString("countsketchmodelstickys"));
-					version.put("countDiagramModelBendpoints", resultVersions.getString("countdiagrammodelbendpoints"));
-					version.put("countDiagramModelReferences", resultVersions.getString("countdiagrammodelreferences"));
+					version.put("countMetadatas", String.valueOf(resultVersions.getInt("countmetadatas")));
+					version.put("countFolders", String.valueOf(resultVersions.getInt("countfolders")));
+					version.put("countElements", String.valueOf(resultVersions.getInt("countelements")));
+					version.put("countRelationships", String.valueOf(resultVersions.getInt("countrelationships")));
+					version.put("countProperties", String.valueOf(resultVersions.getInt("countproperties")));
+					version.put("countArchimateDiagramModels", String.valueOf(resultVersions.getInt("countarchimatediagrammodels")));
+					version.put("countDiagramModelArchimateConnections", String.valueOf(resultVersions.getInt("countdiagrammodelarchimateconnections")));
+					version.put("countDiagramModelConnections", String.valueOf(resultVersions.getInt("countdiagrammodelconnections")));
+					version.put("countDiagramModelArchimateObjects", String.valueOf(resultVersions.getInt("countdiagrammodelarchimateobjects")));
+					version.put("countDiagramModelGroups", String.valueOf(resultVersions.getInt("countdiagrammodelgroups")));
+					version.put("countDiagramModelNotes", String.valueOf(resultVersions.getInt("countdiagrammodelnotes")));
+					version.put("countCanvasModels", String.valueOf(resultVersions.getInt("countcanvasmodels")));
+					version.put("countCanvasModelBlocks", String.valueOf(resultVersions.getInt("countcanvasmodelblocks")));
+					version.put("countCanvasModelStickys", String.valueOf(resultVersions.getInt("countcanvasmodelstickys")));
+					version.put("countCanvasModelConnections", String.valueOf(resultVersions.getInt("countcanvasmodelconnections")));
+					version.put("countCanvasModelImages", String.valueOf(resultVersions.getInt("countcanvasmodelimages")));
+					version.put("countImages", String.valueOf(resultVersions.getInt("countimages")));
+					version.put("countSketchModels", String.valueOf(resultVersions.getInt("countsketchmodels")));
+					version.put("countSketchModelActors", String.valueOf(resultVersions.getInt("countsketchmodelactors")));
+					version.put("countSketchModelStickys", String.valueOf(resultVersions.getInt("countsketchmodelstickys")));
+					version.put("countDiagramModelBendpoints", String.valueOf(resultVersions.getInt("countdiagrammodelbendpoints")));
+					version.put("countDiagramModelReferences", String.valueOf(resultVersions.getInt("countdiagrammodelreferences")));
 					
 					versions.add(version);
 					// only the last one will be kept
