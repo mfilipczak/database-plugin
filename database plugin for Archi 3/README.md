@@ -1,7 +1,7 @@
 # Archimate Tool Database-Plugin for Archi 3
 
 ## Install the plugin
-Download the **_org.archicontribs.database_v0.11(archi3).jar_** file into Archi's plugins folder (usually **_C:\Program Files\Archi\Plugins_** on Windows).
+Download the **_org.archicontribs.database_v0.12(archi3).jar_** file into Archi's plugins folder (usually **_C:\Program Files\Archi\Plugins_** on Windows).
 
 ## Patch Archi
 If you use **_Archi 3.3.1_**, you need to patch Archi in allow the plugin to access Archi images :
