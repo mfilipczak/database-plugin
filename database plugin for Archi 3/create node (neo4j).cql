@@ -1,0 +1,1 @@
+CREATE (:archidatabaseplugin {version:"3"})
