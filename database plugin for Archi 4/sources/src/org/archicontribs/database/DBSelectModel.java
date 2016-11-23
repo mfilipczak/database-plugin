@@ -196,7 +196,7 @@ public class DBSelectModel extends Dialog {
 		lblId = DBPlugin.createLabel(compositeId, 0, 0, 103, 18, "ID :", SWT.CENTER);
 		lblId.addMouseListener(sortColumnsAdapter);
 		id = DBPlugin.createText(dialog, 10, 40, 103, 21, "", SWT.BORDER);
-		id.setTextLimit(8);
+		id.setTextLimit(32);
 		id.addListener(SWT.Verify, verifyId);	//in export mode, the ID may be updated, so we check its validity
 
 		Composite compositeName = DBPlugin.createComposite(dialog, 112, 60, 298, 18, SWT.BORDER);
@@ -264,9 +264,16 @@ public class DBSelectModel extends Dialog {
 			versionGrp = DBPlugin.createGroup(dialog, 520, 35, 205, 102, SWT.NONE);
 	
 			checkActualVersion = DBPlugin.createButton(versionGrp, 6, 18, 96, 16, "actual version :", SWT.RADIO, null);
+			checkActualVersion.addListener(SWT.Selection, versionSelected);
+			
 			checkMinorVersion = DBPlugin.createButton(versionGrp, 6, 37, 101, 16, "minor change :", SWT.RADIO, null);
+			checkMinorVersion.addListener(SWT.Selection, versionSelected);
+			
 			checkMajorVersion = DBPlugin.createButton(versionGrp, 6, 56, 100, 16, "major change :", SWT.RADIO, null);
+			checkMajorVersion.addListener(SWT.Selection, versionSelected);
+			
 			checkCustomVersion = DBPlugin.createButton(versionGrp, 6, 75, 111, 16, "custom version :", SWT.RADIO, null);
+			checkCustomVersion.addListener(SWT.Selection, versionSelected);
 	
 			actualVersionValue = DBPlugin.createText(versionGrp, 120, 18, 68, 15, "", SWT.None);
 			minorVersionValue = DBPlugin.createText(versionGrp, 120, 37, 68, 15, "", SWT.None);
@@ -481,8 +488,8 @@ public class DBSelectModel extends Dialog {
 			owner.setText(System.getProperty("user.name"));
 			
 			checkActualVersion.setEnabled(true);	checkActualVersion.setSelection(false);	actualVersionValue.setEnabled(false);
-			checkMinorVersion.setEnabled(true);	checkMinorVersion.setSelection(true);		minorVersionValue.setEnabled(false);
-			checkMajorVersion.setEnabled(true);	checkMajorVersion.setSelection(false);		majorVersionValue.setEnabled(false);
+			checkMinorVersion.setEnabled(true);		checkMinorVersion.setSelection(true);	minorVersionValue.setEnabled(false);
+			checkMajorVersion.setEnabled(true);		checkMajorVersion.setSelection(false);	majorVersionValue.setEnabled(false);
 			checkCustomVersion.setEnabled(true);	checkCustomVersion.setSelection(false);	customVersionValue.setEnabled(true);
 		} else { // action == Action.IMPORT
 			// in import mode, the text fields will be filled in by values from the database and are not editable
@@ -539,7 +546,7 @@ public class DBSelectModel extends Dialog {
 			btnApplyFilter.setEnabled(false);
 			btnChangeId.setEnabled(false);
 			
-			//when we change the database, there is no filter by default. The use can always open back the filter window
+			//when we change the database, there is no filter by default. The user can always open back the filter window
 			filterModels = "";
 			//filterVersions = "";
 			dialog.setSize(840, 470);
@@ -665,7 +672,7 @@ public class DBSelectModel extends Dialog {
 							modelItem.setData("owner", System.getProperty("user.name"));
 							modelItem.setData("note", "");
 							modelItem.setData("version:actual", dbModel.getVersion());
-							modelItem.setData("version:new", DBPlugin.incMinor(DBPlugin.getVersion(dbModel.getVersion())));
+							modelItem.setData("version:new", DBPlugin.incMinor(dbModel.getVersion()));
 						}
 						if ( tblModels.getItemCount() > 0 ) {			
 							tblModels.setSelection(0);
@@ -892,7 +899,7 @@ public class DBSelectModel extends Dialog {
 			}
 			
 			DBPlugin.debug(DebugLevel.Variable, "*** formerModelItem = "+formerModelItem);
-			// when a new table item is selected, then we save the information (version, purpose, ...) back to it
+			// when a new table item is selected, then we save the information (version, purpose, ...) of the former table item selected
 			if ( formerModelItem != null ) {
 				formerModelItem.setData("name", name.getText());
 				formerModelItem.setData("note", note.getText());
@@ -908,32 +915,33 @@ public class DBSelectModel extends Dialog {
 			}
 			
 			TableItem newVersionItem = tblModels.getSelection()[0];
-			id.setText(newVersionItem.getText(1));
-			name.setText(newVersionItem.getText(2));
-			if ( action == Action.Import ) {
-				tblVersions.removeAll();
-				@SuppressWarnings("unchecked")
-				List<HashMap<String, String>> versions = (List<HashMap<String, String>>)newVersionItem.getData("importVersions");
-				if ( versions.size() > 0 ) {
-					for ( int i = 0 ; i < versions.size(); ++i ) {
-						HashMap<String, String> version = versions.get(i);
-						TableItem versionItem = new TableItem(tblVersions, SWT.NONE);
-						versionItem.setText(0, version.get("version"));
-						versionItem.setText(1, version.get("period"));
+			if ( newVersionItem != null ) {
+				id.setText(newVersionItem.getText(1));
+				name.setText(newVersionItem.getText(2));
+				if ( action == Action.Import ) {
+					tblVersions.removeAll();
+					@SuppressWarnings("unchecked")
+					List<HashMap<String, String>> versions = (List<HashMap<String, String>>)newVersionItem.getData("importVersions");
+					if ( versions.size() > 0 ) {
+						for ( int i = 0 ; i < versions.size(); ++i ) {
+							HashMap<String, String> version = versions.get(i);
+							TableItem versionItem = new TableItem(tblVersions, SWT.NONE);
+							versionItem.setText(0, version.get("version"));
+							versionItem.setText(1, version.get("period"));
+						}
+						tblVersions.setSelection(versions.size()-1);
+						tblVersions.notifyListeners(SWT.Selection, new Event());		 // calls versionSelected listener
 					}
-					tblVersions.setSelection(versions.size()-1);
-					tblVersions.notifyListeners(SWT.Selection, new Event());		 // calls versionSelected listener
+				} else {	// action == Action.Export
+					setSelectedVersion((String)newVersionItem.getData("version:actual"), (String)newVersionItem.getData("version:new"));
+					note.setText((String)newVersionItem.getData("note"));
+					owner.setText((String)newVersionItem.getData("owner"));
+					purpose.setText((String)newVersionItem.getData("purpose"));
 				}
-			} else {	// action == Action.Export
-				setSelectedVersion((String)newVersionItem.getData("version:actual"), (String)newVersionItem.getData("version:new"));
-				note.setText((String)newVersionItem.getData("note"));
-				owner.setText((String)newVersionItem.getData("owner"));
-				purpose.setText((String)newVersionItem.getData("purpose"));
 			}
-			
 			formerModelItem = newVersionItem;
 			
-			// if there is at least one item selected, the we activate the btnOk
+			// if there is at least one item selected, then we activate the btnOk
 			// else, we deactivate it
 			boolean mayValidate = false;
 			for ( TableItem modelItem: tblModels.getItems() ) {
@@ -953,16 +961,21 @@ public class DBSelectModel extends Dialog {
 	private Listener versionSelected = new Listener() {
 		public void handleEvent(Event e) {
 			DBPlugin.debug(DebugLevel.SecondaryMethod, "+Entering DBSelectModel.versionSelected.handleEvent()");
-			TableItem modelItem = tblModels.getSelection()[0];
-			@SuppressWarnings("unchecked")
-			HashMap<String, String> version = ((List<HashMap<String, String>>)modelItem.getData("importVersions")).get(tblVersions.getSelectionIndex());		// we are in import mode as the tblVersion deos not exist in export mode
-			
-			name.setText(version.get("name"));
-			purpose.setText(version.get("purpose"));
-			owner.setText(version.get("owner"));
-			note.setText(version.get("note"));
-			
-			modelItem.setData("version:selected", tblVersions.getSelectionIndex());
+			if ( action == Action.Import ) {
+				TableItem modelItem = tblModels.getSelection()[0];
+				@SuppressWarnings("unchecked")
+				HashMap<String, String> version = ((List<HashMap<String, String>>)modelItem.getData("importVersions")).get(tblVersions.getSelectionIndex());		// we are in import mode as the tblVersion deos not exist in export mode
+				
+				name.setText(version.get("name"));
+				purpose.setText(version.get("purpose"));
+				owner.setText(version.get("owner"));
+				note.setText(version.get("note"));
+				
+				modelItem.setData("version:selected", tblVersions.getSelectionIndex());
+			} else { // if action == Action.Export
+				TableItem tableItem = tblModels.getSelection()[0];
+				tableItem.setData("version:new", getSelectedVersion());
+			}
 			
 			DBPlugin.debug(DebugLevel.SecondaryMethod, "-Leaving DBSelectModel.versionSelected.handleEvent()");
 		}
@@ -1200,12 +1213,12 @@ public class DBSelectModel extends Dialog {
 			filterModels = "";
 			//filterVersions = "";
 			if ( !filterEltModel.isEmpty() ) {
-				filterModels = " WHERE m1.model IN ("+filterEltModel;
+				filterModels = " WHERE m.model IN ("+filterEltModel;
 				//filterVersions = " AND m.version IN ("+filterEltVersion;
 			}
 			if ( !filterRelModel.isEmpty() ) {
 				if ( filterModels.isEmpty() ) {
-					filterModels = " WHERE m1.model IN ("+filterRelModel;
+					filterModels = " WHERE m.model IN ("+filterRelModel;
 					//filterVersions = " AND m.version IN ("+filterRelVersion;
 				} else {
 					filterModels += " INTERSECT "+filterRelModel;
@@ -1214,7 +1227,7 @@ public class DBSelectModel extends Dialog {
 			}
 			if ( !filterPropModel.isEmpty() ) {
 				if ( filterModels.isEmpty() ) {
-					filterModels = " WHERE m1.model IN ("+filterPropModel;
+					filterModels = " WHERE m.model IN ("+filterPropModel;
 					//filterVersions = " AND m.version IN ("+filterPropVersion;
 				} else {
 					filterModels += " INTERSECT "+filterPropModel;
@@ -1367,9 +1380,19 @@ public class DBSelectModel extends Dialog {
 			DBPlugin.debug(DebugLevel.SecondaryMethod, "+Entering DBSelectModel.okButtonCallback.widgetSelected()");
 
 			// just in case the information just changed, we register
-			//if ( action == Action.Export ) {
-			//   enregistrer les chmaps name, purpose, etc ...
-			//}
+			if ( formerModelItem != null ) {
+				formerModelItem.setData("name", name.getText());
+				formerModelItem.setData("note", note.getText());
+				formerModelItem.setData("owner", owner.getText());
+				formerModelItem.setData("purpose", purpose.getText());
+				
+				if ( action == Action.Import ) {
+					formerModelItem.setData("version:selected", tblVersions.getSelectionIndex());
+				} else {	// action == Action.Export
+					formerModelItem.setData("version:actual", actualVersionValue.getText());
+					formerModelItem.setData("version:new", getSelectedVersion());
+				}
+			}
 			
 			selectedModels = new ArrayList<HashMap<String, String>>();
 
@@ -1485,7 +1508,7 @@ public class DBSelectModel extends Dialog {
 		public void handleEvent(Event event) {
 			DBPlugin.debug(DebugLevel.SecondaryMethod, "DBSelectModel.verifyIdListener.handleEvent("+DBPlugin.getEventName(event.type)+")");
 			String value = id.getText().substring(0, event.start) + event.text + id.getText().substring(event.end);
-			event.doit = value.matches("^%?[a-zA-Z0-9]+$");
+			event.doit = value.matches("^%?[a-zA-Z0-9-_]+$");
 		}
 	};
 	
@@ -1504,6 +1527,9 @@ public class DBSelectModel extends Dialog {
 					checkMinorVersion.setSelection(false);
 					checkMajorVersion.setSelection(false);
 					checkCustomVersion.setSelection(true);
+					
+					TableItem tableItem = tblModels.getSelection()[0];
+					tableItem.setData("version:new", value);
 				}
 			} catch (Exception ee) {
 				event.doit = false;
@@ -1547,7 +1573,7 @@ public class DBSelectModel extends Dialog {
     	
     	assert (action == Action.Export );
     	
-    	DBPlugin.debug(DebugLevel.Variable, "actualVersion = \""+actualVersion+ "\"   , new Version = \""+newVersion+"\"");
+    	DBPlugin.debug(DebugLevel.Variable, "actual version = \""+actualVersion+ "\"   , new version = \""+newVersion+"\"");
     	String minor = DBPlugin.incMinor(actualVersion);
 		String major = DBPlugin.incMajor(actualVersion);
 		
@@ -1557,18 +1583,16 @@ public class DBSelectModel extends Dialog {
 		checkCustomVersion.setSelection(false);
 		
 		actualVersionValue.setText(actualVersion);
+		minorVersionValue.setText(minor);
+		majorVersionValue.setText(major);
+		
 		if ( newVersion.equals(actualVersion) )
 			checkActualVersion.setSelection(true);
-		
-		minorVersionValue.setText(minor);
-		if ( newVersion.equals(minor) )
+		else if ( newVersion.equals(minor) )
 			checkMinorVersion.setSelection(true);
-		
-    	majorVersionValue.setText(major);
-    	if ( newVersion.equals(major) )
+		else if ( newVersion.equals(major) )
     		checkMajorVersion.setSelection(true);
-    	
-    	if ( !checkActualVersion.getSelection() && ! checkMinorVersion.getSelection() && !checkMajorVersion.getSelection() ) {
+		else {
     		checkCustomVersion.setSelection(true);
     		customVersionValue.setText(newVersion);
     	}

@@ -688,7 +688,13 @@ public class DBImporter implements IModelImporter, ISelectedModelImporter {
 			result = DBPlugin.select(db, "SELECT * FROM diagrammodelarchimateobject WHERE model = ? AND version = ? ORDER BY indent, rank, parent",
 					_dbModel.getProjectId(), _dbModel.getVersion());
 		} else {
-			result = DBPlugin.select(db, "MATCH (e:diagrammodelarchimateobject)-[:isInModel]->(m:model {model:?, version:?}) RETURN e.id as id, e.fillcolor as fillcolor, e.font as font, e.fontcolor as fontcolor, e.linecolor as linecolor, e.linewidth as linewidth, e.targetconnections as targetconnections, e.textalignment as textalignment, e.x as x, e.y as y, e.width as width, e.height as height, e.class as class, e.archimateelementid as archimateelementid, e.archimateelementname as archimateelementname, e.archimateelementclass as archimateelementclass, e.name as name, e.documentation as documentation, e.bordertype as bordertype, e.content as content, e.type as type, e.parent as parent ORDER BY e.indent, e.rank, e.parent",
+			String textPositionRequest;
+			if ( _dbModel.getDbVersion().contentEquals("3") ) {
+				textPositionRequest = "";
+			} else {
+				textPositionRequest = "e.textposition as textposition, ";
+			}
+			result = DBPlugin.select(db, "MATCH (e:diagrammodelarchimateobject)-[:isInModel]->(m:model {model:?, version:?}) RETURN e.id as id, e.fillcolor as fillcolor, e.font as font, e.fontcolor as fontcolor, e.linecolor as linecolor, e.linewidth as linewidth, e.targetconnections as targetconnections, e.textalignment as textalignment, "+textPositionRequest +"e.x as x, e.y as y, e.width as width, e.height as height, e.class as class, e.archimateelementid as archimateelementid, e.archimateelementname as archimateelementname, e.archimateelementclass as archimateelementclass, e.name as name, e.documentation as documentation, e.bordertype as bordertype, e.content as content, e.type as type, e.parent as parent ORDER BY e.indent, e.rank, e.parent",
 					_dbModel.getProjectId(), _dbModel.getVersion());
 		}
 		

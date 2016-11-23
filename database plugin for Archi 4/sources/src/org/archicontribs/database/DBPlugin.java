@@ -82,16 +82,21 @@ import java.util.Base64;
  *							Use of CLOB for key text fields (name, description, ...)
  *							Use of longer field for ID
  *							Include model and version to referenced Ids to prepare inter-models relationships
- * v0.12: 23/10/2016		Add column "diagrammodelid" to table "diagrammodelreference"
+ * v0.12.0: 23/10/2016		Add column "diagrammodelid" to table "diagrammodelreference"
  * 							Complete rewriting of the source and target connections import procedure
  * 							Add missing column names in Neo4J requests
- *							Rewrite of the NetO4 relationships export request to allow self relationships 
+ *							Rewrite of the NetO4 relationships export request to allow self relationships
+ * v0.12.1: 16/11/2016		fix library dependencies
+ *							fix an import request for Neo4j databases
+ * v0.12.2: 21/11/2016		fix folder count error when exporting project in shared mode
+ * 							correct bug causing release note being not saved in the database
+ * v0.13.0:	23/11/2016		add MS SQL Server support
  */
 public class DBPlugin extends AbstractUIPlugin {
 	public static final String PLUGIN_ID = "org.archicontribs.database";
 	public static DBPlugin INSTANCE;
 	
-	public static final String pluginVersion = "0.12";
+	public static final String pluginVersion = "0.13.0";
 	public static final String pluginName = "DatabasePlugin";
 	public static final String pluginTitle = "Database import/export plugin v" + pluginVersion;
 	public static final String Separator = ";";
@@ -101,12 +106,12 @@ public class DBPlugin extends AbstractUIPlugin {
 	/**
 	 * List of the implemented drivers
 	 */
-	public static final String[] driverList = {"Neo4j", "MySQL", "Oracle", "PostGreSQL", "SQLite"};
+	public static final String[] driverList = {"Neo4j", "MS SQL", "MySQL", "Oracle", "PostGreSQL", "SQLite"};
 	
 	/**
 	 * List of the the default TCP ports
 	 */
-	public static final String[] defaultPorts = {"7687", "3306", "1521", "5432", ""};
+	public static final String[] defaultPorts = {"7687", "1433", "3306", "1521", "5432", ""};
 
 	/**
 	 * Name of all the table names in a SQL database
@@ -697,13 +702,15 @@ public class DBPlugin extends AbstractUIPlugin {
 	public static Connection openConnection(String driver, String server, String port, String database, String username, String password) throws SQLException, ClassNotFoundException {
 		DBPlugin.debug(DebugLevel.MainMethod, "+Entering DBPlugin.openConnection(\""+driver+"\",\""+server+"\",\""+port+"\",\""+database+"\",\""+username+"\",\""+password+"\")");
 		Connection db = null;
+		
 		try {
 			switch (driver.toLowerCase()) {
-			case "neo4j"      : Class.forName("org.neo4j.jdbc.Driver");           db = DriverManager.getConnection("jdbc:neo4j:bolt://" + server + ":" + port, username, password); break;
-			case "postgresql" : Class.forName("org.postgresql.Driver");           db = DriverManager.getConnection("jdbc:postgresql://" + server + ":" + port + "/" + database, username, password);  break;
-			case "mysql"      : Class.forName("com.mysql.jdbc.Driver");           db = DriverManager.getConnection("jdbc:mysql://" + server + ":" + port + "/" + database+"?useSSL=false", username, password);  break;
-			case "oracle"     : Class.forName("oracle.jdbc.driver.OracleDriver"); db = DriverManager.getConnection("jdbc:oracle:thin:@" + server + ":" + port+ ":" + database, username, password); break;
-			case "sqlite"     : Class.forName("org.sqlite.JDBC");                 db = DriverManager.getConnection("jdbc:sqlite:"+server);
+			case "postgresql" : Class.forName("org.postgresql.Driver");           				DBPlugin.debug(DebugLevel.Variable, "JDBC connection string = jdbc:postgresql://" + server + ":" + port + "/" + database);				db = DriverManager.getConnection("jdbc:postgresql://" + server + ":" + port + "/" + database, username, password);  			break;
+			case "ms sql"     : Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");  DBPlugin.debug(DebugLevel.Variable, "JDBC connection string = jdbc:sqlserver://" + server + ":" + port + ";databaseName=" + database);	db = DriverManager.getConnection("jdbc:sqlserver://" + server + ":" + port + ";databaseName=" + database, username, password);				break;
+			case "mysql"      : Class.forName("com.mysql.jdbc.Driver");          				DBPlugin.debug(DebugLevel.Variable, "JDBC connection string = jdbc:mysql://" + server + ":" + port + "/" + database+"?useSSL=false");	db = DriverManager.getConnection("jdbc:mysql://" + server + ":" + port + "/" + database+"?useSSL=false", username, password); 	break;
+			case "neo4j"      : Class.forName("org.neo4j.jdbc.Driver");           				DBPlugin.debug(DebugLevel.Variable, "JDBC connection string = jdbc:neo4j:bolt://" + server + ":" + port);								db = DriverManager.getConnection("jdbc:neo4j:bolt://" + server + ":" + port, username, password); 								break;
+			case "oracle"     : Class.forName("oracle.jdbc.driver.OracleDriver"); 				DBPlugin.debug(DebugLevel.Variable, "JDBC connection string = jdbc:oracle:thin:@" + server + ":" + port+ ":" + database);				db = DriverManager.getConnection("jdbc:oracle:thin:@" + server + ":" + port+ ":" + database, username, password); 				break;
+			case "sqlite"     : Class.forName("org.sqlite.JDBC");                 				DBPlugin.debug(DebugLevel.Variable, "JDBC connection string = jdbc:sqlite:"+server);													db = DriverManager.getConnection("jdbc:sqlite:"+server);
 			}
 		} catch (SQLException err) {
 			// JDBC tries all the drivers until one succeeds to connect to the database

@@ -95,7 +95,7 @@ public class DBExporter implements IModelExporter {
 	@Override
 	public void export(IArchimateModel _model) throws IOException {
 		DBPlugin.debug(DebugLevel.MainMethod, "+Entering DBExporter.export("+_model.getName()+")");
-		
+
 		dbModel = new DBModel(_model);
 		
 		dbSelectModel = new DBSelectModel();
@@ -1671,7 +1671,7 @@ public class DBExporter implements IModelExporter {
 		String folderName = null;
 		int folderType = -1;
 		try {
-			if ( (rank == 0) && (folder.getType().getValue() == 0) ) {
+			if ( (rank == 0) && (folder.getType().getValue() != 0) ) {
 				folderName = ((IFolder)folder.eContainer()).getName();
 				folderType = ((IFolder)folder.eContainer()).getType().getValue();
 			}

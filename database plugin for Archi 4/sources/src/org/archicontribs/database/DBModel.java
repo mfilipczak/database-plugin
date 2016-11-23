@@ -390,14 +390,19 @@ public class DBModel {
 	 * @return
 	 */
 	public EList<IFolder> getFolders() {
+		// in standalone mode, we return the model folders
 		if ( projectFolder == null )
 			return model.getFolders();
 
+		// in shared mode, we construct the list of folders that are specific to the model
 		EList<IFolder> folders = new BasicEList<IFolder>();
 		for ( IFolder f: model.getFolders() ) {
-			for ( IFolder ff: f.getFolders() ) {
-				if ( (DBPlugin.isVersionned(ff.getId()) && DBPlugin.getProjectId(ff.getId()).equals(DBPlugin.getProjectId(projectFolder.getId()))) || ff.getName().equals(projectFolder.getName()) )
-					folders.add(ff);
+			// we do not get subfolders of "projects" folder 
+			if ( f.getType().getValue() != 0 ) {
+				for ( IFolder ff: f.getFolders() ) {
+					if ((DBPlugin.isVersionned(ff.getId()) && DBPlugin.getProjectId(ff.getId()).equals(DBPlugin.getProjectId(projectFolder.getId()))) || ff.getName().equals(projectFolder.getName()) )
+						folders.add(ff);
+				}
 			}
 		}
 		return folders;
@@ -1037,7 +1042,7 @@ public class DBModel {
 			for (String elementId: declaredArchimateElements.get(_parent)) {
 				EObject element = searchEObjectById(elementId);
 				if ( element == null ) {
-					throw new Exception("Cannot set target \""+elementId+"\" to parent \"" + _parent.getId() + "\" as we do not know it !!!");
+					throw new Exception("Cannot set archimateElement \""+elementId+"\" to parent \"" + _parent.getId() + "\" as we do not know it !!!");
 				}
 				DBPlugin.debug(DebugLevel.Variable, "   adding connection \"" + elementId + "\"");
 				_parent.setArchimateElement((IArchimateElement)element);
