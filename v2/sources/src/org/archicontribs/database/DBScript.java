@@ -69,7 +69,7 @@ public class DBScript {
 	            if ( logger.isDebugEnabled() ) logger.debug("Importing the folders ...");
 	            connection.prepareImportFolders(modelToImport);
 	            while ( connection.importFolders(modelToImport) ) {
-	                // each loop imports a folder
+	                // each loop imports a folder 
 	            }
 	            
 	            if ( logger.isDebugEnabled() ) logger.debug("Importing the elements ...");

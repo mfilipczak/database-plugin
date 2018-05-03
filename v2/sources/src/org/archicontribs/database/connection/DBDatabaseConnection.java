@@ -82,7 +82,7 @@ public class DBDatabaseConnection implements AutoCloseable {
 	}
 
 	/**
-	 * Used to switch between ImportConnection and ExpoetConnection.
+	 * Used to switch between ImportConnection and ExportConnection.
 	 */
 	protected DBDatabaseConnection() {
 
@@ -327,13 +327,13 @@ public class DBDatabaseConnection implements AutoCloseable {
 
 			if ( (currentVersion < 200) || (currentVersion > databaseVersion) )
 				throw new SQLException("The database has got an unknown model version (is "+currentVersion+" but should be between 200 and "+databaseVersion+")");
-
-			if ( currentVersion != databaseVersion ) {
+ //commented by me
+		if ( currentVersion != databaseVersion ) {
 				if ( DBGui.question("The database needs to be upgraded. You will not loose any data during this operation.\n\nDo you wish to upgrade your database ?") )
-					upgradeDatabase(currentVersion);
-				else
-					throw new SQLException("The database needs to be upgraded.");
-			}
+				upgradeDatabase(currentVersion);
+			else
+				throw new SQLException("The database needs to be upgraded.");
+		}
 		} finally {
 			DBGui.closePopup();
 		}
