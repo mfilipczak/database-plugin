@@ -165,4 +165,13 @@
             name="Import an Archi Model from a SQL database">
       </commandlineProvider>
    </extension>
+   <extension
+         point="com.archimatetool.commandline.commandlineProvider">
+      <commandlineProvider
+            class="org.archicontribs.database.commandline.DBExportModelProvider"
+            description="Export an Archi Model from to SQL database"
+            id="org.archicontribs.database.commandlineExportProvider"
+            name="Export an Archi Model from to SQL database">
+      </commandlineProvider>
+   </extension>
 </plugin>

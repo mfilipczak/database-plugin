@@ -58,6 +58,20 @@ public class DBArchimateModel extends com.archimatetool.model.impl.ArchimateMode
         if ( logger.isDebugEnabled() ) logger.debug("Creating new ArchimateModel");
         super.setVersion(ModelVersion.VERSION);
     }
+    
+    /**
+     * @param model
+     */
+    public DBArchimateModel(com.archimatetool.model.impl.ArchimateModel model) {
+        super();
+        if ( logger.isDebugEnabled() ) logger.debug("Creating new ArchimateModel");
+        super.setVersion(model.getVersion());
+        super.getFolders().addAll(model.getFolders());
+        super.setName(model.getName());
+        super.setPurpose(model.getPurpose());
+        super.setId(model.getId());
+        super.setAdapter(IArchiveManager.class, model.getAdapter(IArchiveManager.class));
+    }
 
     /**
      * Specifies if we must import the latest version of the components or the version specified in the model.
